@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-deployment
+  labels:
+    app: insecure-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insecure-app
+  template:
+    metadata:
+      labels:
+        app: insecure-app
+    spec:
+      hostNetwork: true
+      containers:
+      - name: insecure-app
+        image: insecureimage:1.2.3 # Set a fixed version instead of "latest"
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
+        securityContext:
+          runAsUser: 10001 # Set user ID to a high value
+          runAsGroup: 10001 # Set group ID to a high value
+          privileged: false # Set to false unless it's unavoidable
+          readOnlyRootFilesystem: true # Make root filesystem read-only
+        volumeMounts:
+        - mountPath: /host
+          name: host-volume
+        resources:
+          requests:
+            cpu: "250m" # Request 250 millicores of CPU
+            memory: "64Mi" # Request 64MiB of memory
+            ephemeral-storage: "1Gi" # Request 1Gi of ephemeral storage
+          limits:
+            cpu: "500m" # Limit to 500 millicores of CPU
+            memory: "128Mi" # Limit to 128MiB of memory
+            ephemeral-storage: "2Gi" # Limit ephemeral storage to 2Gi
+      volumes:
+      - name: host-volume
+        hostPath:
+          path: /
+          type: Directory
